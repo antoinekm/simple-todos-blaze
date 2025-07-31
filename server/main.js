@@ -15,22 +15,22 @@ const SEED_USERNAME = 'meteorite';
 const SEED_PASSWORD = 'password';
 
 Meteor.startup(async () => {
-  const existingUser = await Accounts.findUserByUsername(SEED_USERNAME);
-  if (!existingUser) {
+  let user = await Accounts.findUserByUsername(SEED_USERNAME);
+  
+  if (!user) {
     console.log(`Creating user: ${SEED_USERNAME}`);
-    Accounts.createUser({
+    const userId = await Accounts.createUserAsync({
       username: SEED_USERNAME,
       password: SEED_PASSWORD,
     });
     console.log(`User created: ${SEED_USERNAME}`);
+    user = await Meteor.users.findOneAsync(userId);
   } else {
-    console.log(`User already exists: ${existingUser.username}`);
+    console.log(`User already exists: ${user.username}`);
   }
 
-  const user = await Accounts.findUserByUsername(SEED_USERNAME);
-
   if (await TasksCollection.find().countAsync() === 0) {
-    [
+    const tasks = [
       'First Task',
       'Second Task',
       'Third Task',
@@ -38,6 +38,10 @@ Meteor.startup(async () => {
       'Fifth Task',
       'Sixth Task',
       'Seventh Task',
-    ].forEach(async taskText => insertTask(taskText, await user));
+    ];
+    
+    for (const taskText of tasks) {
+      await insertTask(taskText, user);
+    }
   }
 });
